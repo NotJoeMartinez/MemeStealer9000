@@ -4,6 +4,7 @@ import time
 import tweepy
 import urllib.request
 import os
+import schedule
 
 # reddit api
 reddit = praw.Reddit(client_id=cf.client_id,
@@ -22,9 +23,14 @@ memes_folder = "/memes"  # path to local memes folder
 imagePath = memes_folder
 
 
-# post to twitter
-def post_twitter(imagePath):
-    api.update_with_media(imagePath)
+# post jpg to twitter
+def post_twitter(imagePath, title):
+    api.update_with_media(imagePath, title)
+
+
+# post submission url to twitter
+def post_link_to_twitter(link):
+    api.update_status(link)
 
 
 # download image
@@ -35,25 +41,31 @@ def download_jpg(url, file_path, file_name):
 
 # run the bot
 def run_bot():
-    # find the spicy memes
-    for submission in reddit.subreddit('dankmemes').hot(limit=10):
-        # filter out any non jpg images
+    # find spicy memes
+    for submission in reddit.subreddit('dankmemes').rising(limit=10):
         if submission.url.endswith(".jpg"):
             # download spicy memes
             download_jpg(submission.url, memes_folder, submission.id)
             print("submission with id " + submission.id + " saved to memes folder")
 
-            # try to post spicy memes to twitter
-            post_twitter(imagePath + submission.id + ".jpg")
-            print("posted" + submission.id + ".jpg" + "to twitter")
-            # Delete image from memes folder
+            # post spicy memes to twitter
+            post_twitter(imagePath + submission.id + ".jpg", submission.title)
+            print("posted" + imagePath + submission.id + ".jpg" + "to twitter" )
+            # Delete spicy meme from meme folder
             os.remove(imagePath + submission.id + ".jpg")
-            print("removed " + submission.id + ".jpg" +" from memes folder")
-            print("waiting ten seconds...")
+            print("Deleted " + submission.id)
+            # Wait ten seconds
+            print("wating ten seconds....")
             time.sleep(10)
         else:
-            print("not a jpg")
+            # post link to twitter with the submission title
+            post_link_to_twitter(submission.title + "  " + submission.url)
+            print("posted link to twitter")
 
+
+# runs bot every 3 hours
+schedule.every(3).hours.do(run_bot)
 
 while True:
-    run_bot()
+    schedule.run_pending()
+    time.sleep(1)
