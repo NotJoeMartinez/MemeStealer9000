@@ -46,6 +46,9 @@ def run_bot():
             # try to post spicy memes to twitter
             post_twitter(imagePath + submission.id + ".jpg")
             print("posted" + submission.id + ".jpg" + "to twitter")
+            # Delete image from memes folder
+            os.remove(imagePath + submission.id + ".jpg")
+            print("removed " + submission.id + ".jpg" +" from memes folder")
             print("waiting ten seconds...")
             time.sleep(10)
         else:
